@@ -1,2 +1,4 @@
 # cache_simulator
-A C program to simulates different type of cache access
+A C program to simulate different type of cache access
+
+
