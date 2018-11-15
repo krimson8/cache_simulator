@@ -4,7 +4,7 @@
 
 typedef struct{
     int occupied;
-    long long content;
+    unsigned long long tag;
     unsigned long long time_stamp;
 }block;
 
@@ -20,7 +20,7 @@ block **cache_init(int cache_size, int assoc, int block_size) {
     for(int i = 0; i < set_number; i++) {
         for(int j = 0; j < assoc; j++) {
             cache[i][j].time_stamp = 0;
-            cache[i][j].content = -1;
+            cache[i][j].tag = 0;
             cache[i][j].occupied = 0;
         }
     }
@@ -28,51 +28,51 @@ block **cache_init(int cache_size, int assoc, int block_size) {
     printf("Created a cache with %d set, each with %d blocks.\n", set_number, assoc);
     // for(int i = 0; i < set_number; i++) {
     //     for(int j = 0; j < assoc; j++) {
-    //         printf("%lld ", cache[i][j].content);
+    //         printf("%lld ", cache[i][j].tag);
     //     }
     //     printf("\n");
     // }
     return cache;
 }
 
-int exist_in_cache(block **cache, int assoc, int input_rem, long long input_dec) {
+int exist_in_cache(block **cache, int assoc, int input_set, unsigned long long input_dec) {
     for(int i = 0; i < assoc; i++) {
-        if(cache[input_rem][i].content == input_dec) {
-            cache[input_rem][i].time_stamp = 0; 
+        if(cache[input_set][i].tag == input_dec) {
+            cache[input_set][i].time_stamp = 0; 
             return 1;
         }
     }
     return 0;
 }
 
-int write_to_cache(block **cache, int assoc, int input_rem, long long input_dec) {
+int write_to_cache(block **cache, int assoc, int input_set, unsigned long long input_dec) {
     for(int i = 0; i < assoc; i++) {
-        if(cache[input_rem][i].occupied == 0) {
-            cache[input_rem][i].occupied = 1;
-            cache[input_rem][i].content = input_dec;
-            cache[input_rem][i].time_stamp = 0; 
+        if(cache[input_set][i].occupied == 0) {
+            cache[input_set][i].occupied = 1;
+            cache[input_set][i].tag = input_dec;
+            cache[input_set][i].time_stamp = 0; 
             return 1;
         }
     }
     return 0;
 }
 
-void lru_replacement(block **cache, int assoc, int input_rem, long long input_dec) {
+void lru_replacement(block **cache, int assoc, int input_set, unsigned long long input_dec) {
     unsigned long long max = 0;
     int lru_entry = 0;
     for(int i = 0; i < assoc; i++) {
-        if(cache[input_rem][i].time_stamp > max) {
-            max = cache[input_rem][i].time_stamp;
+        if(cache[input_set][i].time_stamp > max) {
+            max = cache[input_set][i].time_stamp;
             lru_entry = i;
         }
     }
-    cache[input_rem][lru_entry].content = input_dec;
-    cache[input_rem][lru_entry].time_stamp = 0; 
+    cache[input_set][lru_entry].tag = input_dec;
+    cache[input_set][lru_entry].time_stamp = 0; 
 }
 
-void increment_timestamp(block **cache, int assoc, int input_rem) {
+void increment_timestamp(block **cache, int assoc, int input_set) {
     for(int i = 0; i < assoc; i++) {
-        cache[input_rem][i].time_stamp++;
+        cache[input_set][i].time_stamp++;
     }
 }
 
@@ -103,21 +103,23 @@ int main(int argc, char *argv[]) {
     block **cache = cache_init(cache_size, assoc, block_size);
     while(scanf("%s %s", rw, input) != EOF) {
         unsigned long long input_dec = strtoll(input, &pEND, 16);
-        int input_rem = input_dec % set_number;
-        // printf("%s %lld -- input_rem = %d\n", rw, input_dec, input_rem);
+
+        int input_set = input_dec % set_number;
+        // printf("%s %lld -- input_set = %d\n", rw, input_dec, input_set);
+        int offset_bit = count_offset();
 
         total_access++;
 
         if(!strcmp(rw, "r")) {
             read_access++;
-            int hit = exist_in_cache(cache, assoc, input_rem, input_dec);
+            int hit = exist_in_cache(cache, assoc, input_set, input_dec);
             if(!hit) {
                 // printf("Hit missed -");
-                int write_success = write_to_cache(cache, assoc, input_rem, input_dec);
+                int write_success = write_to_cache(cache, assoc, input_set, input_dec);
                 
                 if(!write_success) {
                     // printf("Write missed - Do LRU");
-                    lru_replacement(cache, assoc, input_rem, input_dec);
+                    lru_replacement(cache, assoc, input_set, input_dec);
                 }
                 // printf("\n");
                 total_miss++;
@@ -127,18 +129,18 @@ int main(int argc, char *argv[]) {
                 // printf("Hit success\n");
             }
             
-            increment_timestamp(cache, assoc, input_rem);
+            increment_timestamp(cache, assoc, input_set);
         }
         else if(!strcmp(rw, "w")) {
             write_access++;
-            int hit = exist_in_cache(cache, assoc, input_rem, input_dec);
+            int hit = exist_in_cache(cache, assoc, input_set, input_dec);
             if(!hit) {
                 // printf("Hit missed -");
-                int write_success = write_to_cache(cache, assoc, input_rem, input_dec);
+                int write_success = write_to_cache(cache, assoc, input_set, input_dec);
                 
                 if(!write_success) {
                     // printf("Write missed - Do LRU");
-                    lru_replacement(cache, assoc, input_rem, input_dec);
+                    lru_replacement(cache, assoc, input_set, input_dec);
                 }
                 // printf("\n");
                 total_miss++;
@@ -148,7 +150,7 @@ int main(int argc, char *argv[]) {
                 // printf("Hit success\n");
             }
 
-            increment_timestamp(cache, assoc, input_rem);
+            increment_timestamp(cache, assoc, input_set);
         }
     }
 
