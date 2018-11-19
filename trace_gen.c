@@ -2,13 +2,14 @@
 #include <stdio.h>
 #define ASSOC 65
 #define SET_NUMBER 512
+#define OFFSET_WIDTH 3
 
 int main() {
     int x = 1;
     for(int i = 0; i < ASSOC; i++) {
-        x <<= 3;
+        x <<= OFFSET_WIDTH;
         printf("r %x\n", x);
-        x >>= 3;
+        x >>= OFFSET_WIDTH;
         x += SET_NUMBER;
     }
 }

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 typedef struct{
     int valid;
@@ -70,6 +71,11 @@ void lru_replacement(block **cache, int assoc, int input_set, unsigned long long
     cache[input_set][lru_entry].time_stamp = 0; 
 }
 
+void random_replacement(block **cache, int assoc, int input_set, unsigned long long input_dec) {
+    int r = rand() % assoc;
+    cache[input_set][r].tag = input_dec;
+}
+
 void increment_timestamp(block **cache, int assoc, int input_set) {
     for(int i = 0; i < assoc; i++) {
         cache[input_set][i].time_stamp++;
@@ -95,7 +101,8 @@ int main(int argc, char *argv[]) {
     int cache_size = atoi(argv[1]) * 1024;
     int assoc = atoi(argv[2]);
     int block_size = atoi(argv[3]);
-    int op_type = atoi(argv[4]);
+    char op_type[2];
+    strcpy(op_type, argv[4]);
 
     char rw[2];
     char input[16];
@@ -114,6 +121,7 @@ int main(int argc, char *argv[]) {
     // printf("Offset = %d bits\n", offset_width);
 
     block **cache = cache_init(cache_size, assoc, block_size);
+    srand(time(NULL));
     while(scanf("%s %s", rw, input) != EOF) {
         unsigned long long input_dec = strtoull(input, &pEND, 16);
 
@@ -134,7 +142,16 @@ int main(int argc, char *argv[]) {
                 
                 if(!write_success) {
                     // printf("Write missed - Do LRU");
-                    lru_replacement(cache, assoc, input_set, input_dec);
+                    if(!strcmp(op_type, "l")) {
+                        lru_replacement(cache, assoc, input_set, input_dec);
+                    }
+                    else if(!strcmp(op_type, "r")) {
+                        random_replacement(cache, assoc, input_set, input_dec);
+                    }
+                    else {
+                        printf("Error: Invalid Argument (l or r)\n");
+                        return 0;
+                    } 
                 }
                 // printf("\n");
                 total_miss++;
@@ -155,7 +172,16 @@ int main(int argc, char *argv[]) {
                 
                 if(!write_success) {
                     // printf("Write missed - Do LRU");
-                    lru_replacement(cache, assoc, input_set, input_dec);
+                    if(!strcmp(op_type, "l")) {
+                        lru_replacement(cache, assoc, input_set, input_dec);
+                    }
+                    else if(!strcmp(op_type, "r")) {
+                        random_replacement(cache, assoc, input_set, input_dec);
+                    }
+                    else {
+                        printf("Error: Invalid Argument (l or r)\n");
+                        return 0;
+                    } 
                 }
                 // printf("\n");
                 total_miss++;

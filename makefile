@@ -1,12 +1,21 @@
-.PHONY: simulator clean
+CC = gcc
+CFLAGS = -o
+EXEC = simulator
+SOURCE = simulator.c
 
-simulator: 
-	gcc simulator.c -o simulator
+.PHONY: all simulator clean
+
+all: 
+	$(CC) $(CFLAGS) $(EXEC) $(SOURCE)
 clean:
-	rm simulator
-test1:
-	./simulator 2048 64 64 1 < trace/429.mcf-184B.trace.txt/429.mcf-184B.trace.txt
-test2:
-	./simulator 2048 64 64 1 < trace1.txt
-test3:
-	./P74XXXXXX -input trace/trace3.txt -output out3
+	rm $(EXEC)
+test1: all
+	./$(EXEC) 2048 64 64 l < trace/429.mcf-184B.trace.txt/429.mcf-184B.trace.txt
+test2: all
+	./$(EXEC) 2048 64 64 l < try.txt
+test3: all
+	./$(EXEC) 2048 64 64 r < trace/429.mcf-184B.trace.txt/429.mcf-184B.trace.txt
+gen:
+	$(CC) $(CFLAGS) gen trace_gen.c
+	./gen > try.txt
+	rm gen
