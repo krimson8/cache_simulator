@@ -27,16 +27,11 @@ block **cache_init(int cache_size, int assoc, int block_size) {
     }
 
     // printf("Created a cache with %d set, each with %d blocks.\n", set_number, assoc);
-    // for(int i = 0; i < set_number; i++) {
-    //     for(int j = 0; j < assoc; j++) {
-    //         printf("%lld ", cache[i][j].tag);
-    //     }
-    //     printf("\n");
-    // }
     return cache;
 }
 
 int exist_in_cache(block **cache, int assoc, int input_set, unsigned long long input_dec) {
+    // check if exists in the cache set
     for(int i = 0; i < assoc; i++) {
         if(cache[input_set][i].tag == input_dec && cache[input_set][i].valid == 1) {
             cache[input_set][i].time_stamp = 0; 
@@ -137,11 +132,9 @@ int main(int argc, char *argv[]) {
             read_access++;
             int hit = exist_in_cache(cache, assoc, input_set, input_dec);
             if(!hit) {
-                // printf("Hit missed -");
                 int write_success = write_to_cache(cache, assoc, input_set, input_dec);
                 
                 if(!write_success) {
-                    // printf("Write missed - Do LRU");
                     if(!strcmp(op_type, "l")) {
                         lru_replacement(cache, assoc, input_set, input_dec);
                     }
@@ -153,25 +146,18 @@ int main(int argc, char *argv[]) {
                         return 0;
                     } 
                 }
-                // printf("\n");
                 total_miss++;
                 read_miss++;
             }
-            else {
-                // printf("Hit success\n");
-            }
-            
             increment_timestamp(cache, assoc, input_set);
         }
         else if(!strcmp(rw, "w")) {
             write_access++;
             int hit = exist_in_cache(cache, assoc, input_set, input_dec);
             if(!hit) {
-                // printf("Hit missed -");
                 int write_success = write_to_cache(cache, assoc, input_set, input_dec);
                 
                 if(!write_success) {
-                    // printf("Write missed - Do LRU");
                     if(!strcmp(op_type, "l")) {
                         lru_replacement(cache, assoc, input_set, input_dec);
                     }
@@ -183,32 +169,16 @@ int main(int argc, char *argv[]) {
                         return 0;
                     } 
                 }
-                // printf("\n");
                 total_miss++;
                 write_miss++;
             }
-            else {
-                // printf("Hit success\n");
-            }
-
             increment_timestamp(cache, assoc, input_set);
         }
     }
 
-    // printf("\nTotal miss = %d\n", total_miss);
-    // printf("Total access = %d\n", total_access);
     double miss_rate = ((double)total_miss/total_access) * 100;
-    // printf("Miss rate = %.2lf%%\n", miss_rate);
-
-    // printf("\nRead miss = %d\n", read_miss);
-    // printf("Read access = %d\n", read_access);
     double read_miss_rate = ((double)read_miss/read_access) * 100;
-    // printf("Read miss rate = %.2lf%%\n", read_miss_rate);
-
-    // printf("\nWrite miss = %d\n", write_miss);
-    // printf("Write access = %d\n", write_access);
     double write_miss_rate = ((double)write_miss/write_access) * 100;
-    // printf("Write miss rate = %.2lf%%\n", write_miss_rate);
 
     printf("%d %.6lf%% %d %.6lf%% %d %.6lf%%\n", total_miss, miss_rate, read_miss, read_miss_rate, write_miss, write_miss_rate);
     return 0;
