@@ -4,9 +4,11 @@
 #define SET_NUMBER 512
 
 int main() {
-    int x = 0;
+    int x = 1;
     for(int i = 0; i < ASSOC; i++) {
+        x <<= 3;
         printf("r %x\n", x);
+        x >>= 3;
         x += SET_NUMBER;
     }
 }

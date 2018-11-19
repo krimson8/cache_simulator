@@ -3,7 +3,7 @@
 #include <string.h>
 
 typedef struct{
-    int occupied;
+    int valid;
     unsigned long long tag;
     unsigned long long time_stamp;
 }block;
@@ -21,11 +21,11 @@ block **cache_init(int cache_size, int assoc, int block_size) {
         for(int j = 0; j < assoc; j++) {
             cache[i][j].time_stamp = 0;
             cache[i][j].tag = 0;
-            cache[i][j].occupied = 0;
+            cache[i][j].valid = 0;
         }
     }
 
-    printf("Created a cache with %d set, each with %d blocks.\n", set_number, assoc);
+    // printf("Created a cache with %d set, each with %d blocks.\n", set_number, assoc);
     // for(int i = 0; i < set_number; i++) {
     //     for(int j = 0; j < assoc; j++) {
     //         printf("%lld ", cache[i][j].tag);
@@ -37,7 +37,7 @@ block **cache_init(int cache_size, int assoc, int block_size) {
 
 int exist_in_cache(block **cache, int assoc, int input_set, unsigned long long input_dec) {
     for(int i = 0; i < assoc; i++) {
-        if(cache[input_set][i].tag == input_dec) {
+        if(cache[input_set][i].tag == input_dec && cache[input_set][i].valid == 1) {
             cache[input_set][i].time_stamp = 0; 
             return 1;
         }
@@ -47,8 +47,8 @@ int exist_in_cache(block **cache, int assoc, int input_set, unsigned long long i
 
 int write_to_cache(block **cache, int assoc, int input_set, unsigned long long input_dec) {
     for(int i = 0; i < assoc; i++) {
-        if(cache[input_set][i].occupied == 0) {
-            cache[input_set][i].occupied = 1;
+        if(cache[input_set][i].valid == 0) {
+            cache[input_set][i].valid = 1;
             cache[input_set][i].tag = input_dec;
             cache[input_set][i].time_stamp = 0; 
             return 1;
@@ -76,6 +76,16 @@ void increment_timestamp(block **cache, int assoc, int input_set) {
     }
 }
 
+int count_offset(int block_size) {
+    // block_size /= 8; // turn from bits to bytes
+    int count = 0;
+    while(block_size > 1) {
+        block_size /= 2;
+        count++;
+    }
+    return count;
+}
+
 int main(int argc, char *argv[]) {
     if(argc != 5) {
         printf("Error: Invalid Argument\n");
@@ -99,14 +109,19 @@ int main(int argc, char *argv[]) {
     int write_miss = 0;
 
     int set_number = cache_size / assoc / block_size;
+    // count offset
+    int offset_width = count_offset(block_size);
+    // printf("Offset = %d bits\n", offset_width);
 
     block **cache = cache_init(cache_size, assoc, block_size);
     while(scanf("%s %s", rw, input) != EOF) {
-        unsigned long long input_dec = strtoll(input, &pEND, 16);
+        unsigned long long input_dec = strtoull(input, &pEND, 16);
 
-        int input_set = input_dec % set_number;
-        // printf("%s %lld -- input_set = %d\n", rw, input_dec, input_set);
-        int offset_bit = count_offset();
+        input_dec >>= offset_width; // dispose offset;
+        int input_set = input_dec & (set_number - 1);
+        input_dec = (input_dec | (set_number - 1)) ^ (set_number - 1);
+
+        // printf("%s %llu -- input_set = %d\n", rw, input_dec, input_set);
 
         total_access++;
 
@@ -154,20 +169,21 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("\nTotal miss = %d\n", total_miss);
-    printf("Total access = %d\n", total_access);
+    // printf("\nTotal miss = %d\n", total_miss);
+    // printf("Total access = %d\n", total_access);
     double miss_rate = ((double)total_miss/total_access) * 100;
-    printf("Miss rate = %.2lf%%\n", miss_rate);
+    // printf("Miss rate = %.2lf%%\n", miss_rate);
 
-    printf("\nRead miss = %d\n", read_miss);
-    printf("Read access = %d\n", read_access);
+    // printf("\nRead miss = %d\n", read_miss);
+    // printf("Read access = %d\n", read_access);
     double read_miss_rate = ((double)read_miss/read_access) * 100;
-    printf("Read miss rate = %.2lf%%\n", read_miss_rate);
+    // printf("Read miss rate = %.2lf%%\n", read_miss_rate);
 
-    printf("\nWrite miss = %d\n", write_miss);
-    printf("Write access = %d\n", write_access);
+    // printf("\nWrite miss = %d\n", write_miss);
+    // printf("Write access = %d\n", write_access);
     double write_miss_rate = ((double)write_miss/write_access) * 100;
-    printf("Write miss rate = %.2lf%%\n", write_miss_rate);
+    // printf("Write miss rate = %.2lf%%\n", write_miss_rate);
 
+    printf("%d %.6lf%% %d %.6lf%% %d %.6lf%%\n", total_miss, miss_rate, read_miss, read_miss_rate, write_miss, write_miss_rate);
     return 0;
 }
